@@ -78,19 +78,19 @@ async function saveBookToAPI() {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-    // Mostrar loading
     showLoading();
-    
-    // Tentar carregar do banco
-    const loaded = await loadBookFromAPI();
-    
-    if (loaded) {
-        loadBookData();
+    try {
+        const loaded = await loadBookFromAPI();
+        if (loaded) {
+            loadBookData();
+        }
+        generatePages();
+        updatePageSelector();
+    } catch (err) {
+        console.error('Falha na inicialização:', err);
+    } finally {
+        hideLoading();
     }
-    
-    generatePages();
-    updatePageSelector();
-    hideLoading();
 });
 
 function showLoading() {
@@ -548,92 +548,6 @@ function addVideoElement() {
 }
 
 // Sistema de drag and drop
-function makeDraggable(element) {
-    element.addEventListener('mousedown', startDrag);
-    element.addEventListener('click', selectElement);
-}
-
-function selectElement(e) {
-    e.stopPropagation();
-    if (selectedElement) {
-        selectedElement.classList.remove('selected');
-        hideResizeHandles(selectedElement);
-    }
-    selectedElement = e.target.closest('.draggable-element');
-    selectedElement.classList.add('selected');
-    showResizeHandles(selectedElement);
-}
-
-function startDrag(e) {
-    if (e.target.classList.contains('resize-handle')) {
-        startResize(e);
-        return;
-    }
-
-    e.preventDefault();
-    isDragging = true;
-    selectedElement = e.target.closest('.draggable-element');
-    
-    const rect = selectedElement.getBoundingClientRect();
-    const editorRect = document.getElementById('editorPage').getBoundingClientRect();
-    
-    dragOffset.startX = e.clientX;
-    dragOffset.startY = e.clientY;
-    dragOffset.startWidth = rect.width;
-    dragOffset.startHeight = rect.height;
-    dragOffset.startLeft = rect.left - editorRect.left;
-    dragOffset.startTop = rect.top - editorRect.top;
-    
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('mouseup', stopResize);
-}
-
-function resize(e) {
-    if (!isResizing || !selectedElement) return;
-    
-    const deltaX = e.clientX - dragOffset.startX;
-    const deltaY = e.clientY - dragOffset.startY;
-    
-    let newWidth = dragOffset.startWidth;
-    let newHeight = dragOffset.startHeight;
-    let newLeft = dragOffset.startLeft;
-    let newTop = dragOffset.startTop;
-    
-    switch (resizeHandle) {
-        case 'se':
-            newWidth = Math.max(50, dragOffset.startWidth + deltaX);
-            newHeight = Math.max(30, dragOffset.startHeight + deltaY);
-            break;
-        case 'sw':
-            newWidth = Math.max(50, dragOffset.startWidth - deltaX);
-            newHeight = Math.max(30, dragOffset.startHeight + deltaY);
-            newLeft = dragOffset.startLeft + deltaX;
-            break;
-        case 'ne':
-            newWidth = Math.max(50, dragOffset.startWidth + deltaX);
-            newHeight = Math.max(30, dragOffset.startHeight - deltaY);
-            newTop = dragOffset.startTop + deltaY;
-            break;
-        case 'nw':
-            newWidth = Math.max(50, dragOffset.startWidth - deltaX);
-            newHeight = Math.max(30, dragOffset.startHeight - deltaY);
-            newLeft = dragOffset.startLeft + deltaX;
-            newTop = dragOffset.startTop + deltaY;
-            break;
-    }
-    
-    selectedElement.style.width = newWidth + 'px';
-    selectedElement.style.height = newHeight + 'px';
-    selectedElement.style.left = Math.max(0, newLeft) + 'px';
-    selectedElement.style.top = Math.max(0, newTop) + 'px';
-}
-
-function stopResize() {
-    isResizing = false;
-    resizeHandle = null;
-    document.removeEventListener('mousemove', resize);
-    document.removeEventListener('mouseup', stopResize);
-}
 
 // Event listeners
 document.addEventListener('keydown', function(e) {
@@ -722,3 +636,114 @@ function startResize(e) {
     
     const rect = selectedElement.getBoundingClientRect();
     const editorRect = document.getElementById('editorPage').getBoundingClientRect();}
+
+function makeDraggable(element) {
+    element.addEventListener('mousedown', startDrag);
+    element.addEventListener('click', selectElement);
+}
+
+function startDrag(e) {
+    if (e.target.classList.contains('resize-handle')) {
+        startResize(e);
+        return;
+    }
+
+    e.preventDefault();
+    isDragging = true;
+    selectedElement = e.target.closest('.draggable-element');
+
+    const rect = selectedElement.getBoundingClientRect();
+    const editorRect = document.getElementById('editorPage').getBoundingClientRect();
+
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDrag);
+}
+
+function drag(e) {
+    if (!isDragging || !selectedElement) return;
+
+    const editorRect = document.getElementById('editorPage').getBoundingClientRect();
+    const newX = e.clientX - editorRect.left - dragOffset.x;
+    const newY = e.clientY - editorRect.top - dragOffset.y;
+
+    selectedElement.style.left = Math.max(0, Math.min(newX, editorRect.width - selectedElement.offsetWidth)) + 'px';
+    selectedElement.style.top  = Math.max(0, Math.min(newY, editorRect.height - selectedElement.offsetHeight)) + 'px';
+}
+
+function stopDrag() {
+    isDragging = false;
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', stopDrag);
+}
+
+function startResize(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    isResizing = true;
+    resizeHandle = e.target.dataset.position;
+    selectedElement = e.target.closest('.draggable-element');
+
+    const rect = selectedElement.getBoundingClientRect();
+    const editorRect = document.getElementById('editorPage').getBoundingClientRect();
+
+    dragOffset.startX = e.clientX;
+    dragOffset.startY = e.clientY;
+    dragOffset.startWidth  = rect.width;
+    dragOffset.startHeight = rect.height;
+    dragOffset.startLeft   = rect.left - editorRect.left;
+    dragOffset.startTop    = rect.top  - editorRect.top;
+
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
+}
+
+function resize(e) {
+    if (!isResizing || !selectedElement) return;
+
+    const deltaX = e.clientX - dragOffset.startX;
+    const deltaY = e.clientY - dragOffset.startY;
+
+    let newWidth  = dragOffset.startWidth;
+    let newHeight = dragOffset.startHeight;
+    let newLeft   = dragOffset.startLeft;
+    let newTop    = dragOffset.startTop;
+
+    switch (resizeHandle) {
+        case 'se':
+            newWidth  = Math.max(50, dragOffset.startWidth  + deltaX);
+            newHeight = Math.max(30, dragOffset.startHeight + deltaY);
+            break;
+        case 'sw':
+            newWidth  = Math.max(50, dragOffset.startWidth  - deltaX);
+            newHeight = Math.max(30, dragOffset.startHeight + deltaY);
+            newLeft   = dragOffset.startLeft + deltaX;
+            break;
+        case 'ne':
+            newWidth  = Math.max(50, dragOffset.startWidth  + deltaX);
+            newHeight = Math.max(30, dragOffset.startHeight - deltaY);
+            newTop    = dragOffset.startTop + deltaY;
+            break;
+        case 'nw':
+            newWidth  = Math.max(50, dragOffset.startWidth  - deltaX);
+            newHeight = Math.max(30, dragOffset.startHeight - deltaY);
+            newLeft   = dragOffset.startLeft + deltaX;
+            newTop    = dragOffset.startTop  + deltaY;
+            break;
+    }
+
+    selectedElement.style.width  = newWidth + 'px';
+    selectedElement.style.height = newHeight + 'px';
+    selectedElement.style.left   = Math.max(0, newLeft) + 'px';
+    selectedElement.style.top    = Math.max(0, newTop)  + 'px';
+}
+
+function stopResize() {
+    isResizing = false;
+    resizeHandle = null;
+    document.removeEventListener('mousemove', resize);
+    document.removeEventListener('mouseup', stopResize);
+}
