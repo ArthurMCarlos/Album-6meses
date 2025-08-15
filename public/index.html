@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nossa História</title>
+    <link rel="stylesheet" href="/public/style.css">
+    <link rel="shortcut icon" type="imagex/png" href="/public/heart.png">
+</head>
+<body>
+    <!-- Capa do Livro -->
+    <div class="cover-container" id="coverContainer">
+        <div class="book-cover" id="bookCover">
+            <div class="cover-title" contenteditable="true" id="coverTitle">Nossa História</div>
+            
+            <div class="cover-photo" id="coverPhoto" onclick="uploadCoverPhoto()">
+                <span>Clique para adicionar foto/vídeo</span>
+            </div>
+            
+            <div class="cover-text" contenteditable="true" id="coverText">
+                Uma jornada de amor e momentos especiais...
+            </div>
+            <div class="cover-buttons">
+                <button class="btn btn-cover-edit" onclick="openCoverEditor()">🎨 Editar Capa</button>
+                <button class="btn btn-edit" onclick="openEditor()">✏️ Editar Páginas</button>
+                <button class="btn btn-read" onclick="openBook()">📖 Ler</button>
+            </div>
+        </div>
+    </div>
+    <!-- Livro -->
+    <div class="book-container" id="bookContainer">
+        <div class="book-controls">
+            <button class="btn" onclick="closebook()" style="background: #f44336; color: white;">✕ Fechar</button>
+        </div>
+
+        <div class="book" id="book">
+            <!-- As páginas serão geradas dinamicamente -->
+        </div>
+        <div class="page-controls">
+            <button class="btn" onclick="prevPage()" style="background: #2196F3; color: white;">← Anterior</button>
+            <span id="pageIndicator">Página 1</span>
+            <button class="btn" onclick="nextPage()" style="background: #2196F3; color: white;">Próxima →</button>
+        </div>
+    </div>
+    <!-- Editor das Páginas -->
+    <div class="editor" id="editor">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2>📝 Editor do Álbum</h2>
+                <button class="btn" onclick="closeEditor()" style="background: #f44336; color: white;">✕ Fechar</button>
+            </div>
+            <div class="editor-toolbar">
+                <button class="btn" onclick="addPage()" style="background: #4CAF50; color: white;">+ Nova Página</button>
+                <button class="btn" onclick="addTextElement()" style="background: #2196F3; color: white;">📝 Adicionar Texto</button>
+                <button class="btn" onclick="addImageElement()" style="background: #FF9800; color: white;">🖼️ Adicionar Imagem</button>
+                <button class="btn" onclick="addVideoElement()" style="background: #E91E63; color: white;">🎥 Adicionar Vídeo</button>
+                <button class="btn" onclick="deletePage()" style="background: #f44336; color: white;">🗑️ Excluir Página</button>
+                <select id="pageSelector" onchange="switchEditorPage()">
+                    <option value="0">Página 1</option>
+                </select>
+            </div>
+            
+            <div class="editor-content">
+                <div class="editor-page" id="editorPage">
+                    <!-- Elementos serão adicionados aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Editor da Capa -->
+    <div class="cover-editor" id="coverEditor">
+        <div class="cover-editor-container">
+            <div class="cover-editor-header">
+                <h2>🎨 Editor da Capa</h2>
+                <button class="btn" onclick="closeCoverEditor()" style="background: #f44336; color: white;">✕ Fechar</button>
+            </div>
+            
+            <div class="cover-editor-content">
+                <div class="cover-preview">
+                    <div class="book-cover" id="coverPreview" style="transform: scale(0.8);">
+                        <div class="cover-title" id="previewTitle">Nossa História</div>
+                        <div class="cover-photo" id="previewPhoto">
+                            <span>Clique para adicionar foto/vídeo</span>
+                        </div>
+                        <div class="cover-text" id="previewText">Uma jornada de amor e momentos especiais...</div>
+                    </div>
+                </div>
+                
+                <div class="cover-controls">
+                    <div class="control-group">
+                        <label>Título:</label>
+                        <input type="text" id="titleInput" value="Nossa História" oninput="updateCoverPreview()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Texto da Capa:</label>
+                        <textarea id="textInput" oninput="updateCoverPreview()">Uma jornada de amor e momentos especiais...</textarea>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Cor do Título:</label>
+                        <div class="color-picker">
+                            <input type="color" id="titleColor" value="#FFD700" oninput="updateCoverPreview()">
+                            <span>Dourado</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Cor do Texto:</label>
+                        <div class="color-picker">
+                            <input type="color" id="textColor" value="#FFD700" oninput="updateCoverPreview()">
+                            <span>Dourado</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Cor de Fundo:</label>
+                        <select id="backgroundStyle" onchange="updateCoverPreview()">
+                            <option value="classic">Marrom Clássico</option>
+                            <option value="elegant">Azul Elegante</option>
+                            <option value="romantic">Rosa Romântico</option>
+                            <option value="modern">Preto Moderno</option>
+                            <option value="vintage">Verde Vintage</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Tamanho da Fonte do Título:</label>
+                        <input type="range" id="titleSize" min="1.5" max="4" step="0.1" value="2.8" oninput="updateCoverPreview()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <button class="btn" onclick="changeCoverMedia()" style="background: #FF9800; color: white; width: 100%;">📷 Trocar Foto/Vídeo</button>
+                    </div>
+                    
+                    <div class="control-group">
+                        <button class="btn" onclick="applyCoverChanges()" style="background: #4CAF50; color: white; width: 100%;">✓ Aplicar Mudanças</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Input oculto para upload de arquivos -->
+    <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*" onchange="handleFileUpload(event)">
+    <script src="/public/script.js"></script>
+</body>
+</html>
