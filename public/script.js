@@ -237,6 +237,8 @@ function closeEditor() {
     saveCurrentEditorPage();
     document.getElementById('editor').style.display = 'none';
     generatePages();
+    // Força o salvamento
+    setTimeout(() => saveBookData(), 100);
 }
 
 // Editor da Capa
@@ -365,15 +367,18 @@ function createPageElement(elementData) {
 
     if (elementData.type === 'text') {
         el.className = 'text-element';
-        el.textContent = elementData.content;
+        el.innerHTML = elementData.content || 'Texto';
         el.style.fontSize = (elementData.fontSize || 16) + 'px';
         el.style.color = elementData.color || '#333';
+        el.style.padding = '8px';
+        el.style.backgroundColor = 'rgba(255,255,255,0.9)';
+        el.style.borderRadius = '4px';
     } else if (elementData.type === 'image') {
         el.className = 'image-element';
-        el.innerHTML = `<img src="${elementData.src}" alt="${elementData.alt || ''}">`;
+        el.innerHTML = `<img src="${elementData.src}" alt="${elementData.alt || ''}" style="width: 100%; height: 100%; object-fit: cover;">`;
     } else if (elementData.type === 'video') {
         el.className = 'video-element';
-        el.innerHTML = `<video src="${elementData.src}" controls muted></video>`;
+        el.innerHTML = `<video src="${elementData.src}" controls muted style="width: 100%; height: 100%; object-fit: cover;"></video>`;
     }
 
     return el;
@@ -442,38 +447,54 @@ function switchEditorPage() {
 
 function saveCurrentEditorPage() {
     const editorPage = document.getElementById('editorPage');
+    if (!editorPage) return;
+    
     const elements = editorPage.querySelectorAll('.draggable-element');
+    
+    if (!bookData.pages[currentEditorPage]) {
+        bookData.pages[currentEditorPage] = { elements: [] };
+    }
     
     bookData.pages[currentEditorPage].elements = [];
     
     elements.forEach(el => {
         const elementData = {
             type: el.dataset.type,
-            x: parseInt(el.style.left),
-            y: parseInt(el.style.top),
-            width: parseInt(el.style.width),
-            height: parseInt(el.style.height)
+            x: parseInt(el.style.left) || 0,
+            y: parseInt(el.style.top) || 0,
+            width: parseInt(el.style.width) || 100,
+            height: parseInt(el.style.height) || 50
         };
 
         if (el.dataset.type === 'text') {
-            elementData.content = el.textContent;
+            const textContent = el.querySelector('[contenteditable]');
+            elementData.content = textContent ? textContent.innerHTML : el.innerHTML;
             elementData.fontSize = parseInt(el.style.fontSize) || 16;
             elementData.color = el.style.color || '#333';
         } else if (el.dataset.type === 'image') {
             const img = el.querySelector('img');
-            elementData.src = img.src;
-            elementData.alt = img.alt;
+            if (img) {
+                elementData.src = img.src;
+                elementData.alt = img.alt;
+            }
         } else if (el.dataset.type === 'video') {
             const video = el.querySelector('video');
-            elementData.src = video.src;
+            if (video) {
+                elementData.src = video.src;
+            }
         }
 
         bookData.pages[currentEditorPage].elements.push(elementData);
     });
+    
+    // Salvar automaticamente
+    saveBookToAPI();
 }
 
 function loadEditorPage(pageIndex) {
     const editorPage = document.getElementById('editorPage');
+    if (!editorPage) return;
+    
     editorPage.innerHTML = '';
 
     if (bookData.pages[pageIndex]) {
@@ -492,28 +513,72 @@ function createDraggableElement(elementData) {
     el.style.top = elementData.y + 'px';
     el.style.width = elementData.width + 'px';
     el.style.height = elementData.height + 'px';
+    el.style.position = 'absolute';
 
     if (elementData.type === 'text') {
         el.className += ' text-element';
-        el.contentEditable = true;
-        el.textContent = elementData.content;
+        el.innerHTML = elementData.content || 'Digite seu texto aqui...';
         el.style.fontSize = (elementData.fontSize || 16) + 'px';
         el.style.color = elementData.color || '#333';
+        el.style.padding = '8px';
+        el.style.border = '1px solid transparent';
+        el.style.borderRadius = '4px';
+        el.style.backgroundColor = 'rgba(255,255,255,0.9)';
+        el.style.cursor = 'move';
+        el.style.userSelect = 'none';
         
-        // Prevenir drag ao editar texto
-        el.addEventListener('focus', () => {
+        // Criar área editável interna
+        const textContent = document.createElement('div');
+        textContent.contentEditable = true;
+        textContent.innerHTML = elementData.content || 'Digite seu texto aqui...';
+        textContent.style.outline = 'none';
+        textContent.style.width = '100%';
+        textContent.style.height = '100%';
+        textContent.style.border = 'none';
+        textContent.style.background = 'transparent';
+        textContent.style.fontSize = 'inherit';
+        textContent.style.color = 'inherit';
+        textContent.style.cursor = 'text';
+        
+        el.innerHTML = '';
+        el.appendChild(textContent);
+        
+        // Eventos para edição
+        let isEditing = false;
+        
+        textContent.addEventListener('focus', () => {
+            isEditing = true;
             el.style.cursor = 'text';
+            el.style.userSelect = 'text';
         });
         
-        el.addEventListener('blur', () => {
+        textContent.addEventListener('blur', () => {
+            isEditing = false;
             el.style.cursor = 'move';
+            el.style.userSelect = 'none';
+            // Salvar automaticamente quando sair da edição
+            saveCurrentEditorPage();
         });
+        
+        // Prevenir arrasto durante edição
+        el.dataset.isEditing = 'false';
+        textContent.addEventListener('mousedown', (e) => {
+            if (isEditing) {
+                e.stopPropagation();
+            }
+        });
+        
+        // Double click para editar
+        el.addEventListener('dblclick', () => {
+            textContent.focus();
+        });
+        
     } else if (elementData.type === 'image') {
         el.className += ' image-element';
-        el.innerHTML = `<img src="${elementData.src}" alt="${elementData.alt || ''}" style="pointer-events: none;">`;
+        el.innerHTML = `<img src="${elementData.src}" alt="${elementData.alt || ''}" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;">`;
     } else if (elementData.type === 'video') {
         el.className += ' video-element';
-        el.innerHTML = `<video src="${elementData.src}" controls muted style="pointer-events: none;"></video>`;
+        el.innerHTML = `<video src="${elementData.src}" controls muted style="width: 100%; height: 100%; object-fit: cover;"></video>`;
     }
 
     makeDraggable(el);
@@ -567,8 +632,8 @@ function selectElement(e) {
 }
 
 function startDrag(e) {
-    // Se está editando texto, não arrastar
-    if (e.target.contentEditable === 'true' && document.activeElement === e.target) {
+    // Verificar se está clicando em um elemento editável
+    if (e.target.contentEditable === 'true') {
         return;
     }
     
@@ -580,6 +645,8 @@ function startDrag(e) {
     e.preventDefault();
     isDragging = true;
     selectedElement = e.target.closest('.draggable-element');
+    
+    if (!selectedElement) return;
     
     const rect = selectedElement.getBoundingClientRect();
     const editorRect = document.getElementById('editorPage').getBoundingClientRect();
@@ -606,6 +673,11 @@ function stopDrag() {
     isDragging = false;
     document.removeEventListener('mousemove', drag);
     document.removeEventListener('mouseup', stopDrag);
+    
+    // Salvar após mover elemento
+    if (selectedElement) {
+        autoSave();
+    }
 }
 
 // Sistema de redimensionamento
@@ -696,13 +768,34 @@ function stopResize() {
     resizeHandle = null;
     document.removeEventListener('mousemove', resize);
     document.removeEventListener('mouseup', stopResize);
+    
+    // Salvar após redimensionar elemento
+    if (selectedElement) {
+        autoSave();
+    }
 }
 
-// Event listeners
+// Auto-save com frequência menor para evitar muitas requisições
+let saveTimeout;
+function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+        if (document.getElementById('editor')?.style.display === 'block') {
+            saveCurrentEditorPage();
+        }
+        await saveBookData();
+    }, 2000); // 2 segundos após a última alteração
+}
+
+// Event listeners melhorados
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Delete' && selectedElement && document.getElementById('editor').style.display === 'block') {
-        selectedElement.remove();
-        selectedElement = null;
+        // Verificar se não está editando texto
+        if (document.activeElement.contentEditable !== 'true') {
+            selectedElement.remove();
+            selectedElement = null;
+            autoSave();
+        }
     }
 });
 
@@ -718,13 +811,20 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Auto-save
-setInterval(async () => {
+// Salvar ao sair da página ou fechar
+window.addEventListener('beforeunload', async function() {
     if (document.getElementById('editor')?.style.display === 'block') {
         saveCurrentEditorPage();
     }
     await saveBookData();
-}, 10000);
+});
+
+// Salvar periodicamente (backup)
+setInterval(async () => {
+    if (document.getElementById('editor')?.style.display === 'block') {
+        saveCurrentEditorPage();
+    }
+}, 30000); // A cada 30 segundos
 
 // Inicializar handles ocultos
 document.addEventListener('DOMContentLoaded', function() {
