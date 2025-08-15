@@ -134,19 +134,22 @@ app.post('/api/book/:userId', async (req, res) => {
   try {
     const bookData = req.body;
     bookData.userId = req.params.userId;
-    
+
     let book = await Book.findOne({ userId: req.params.userId });
-    
+
     if (book) {
-      // Atualizar livro existente
-      Object.assign(book, bookData);
-      await book.save();
+      // Atualizar livro existente sem checar versão
+      book = await Book.findOneAndUpdate(
+        { userId: req.params.userId },
+        bookData,
+        { new: true } // retorna o documento atualizado
+      );
     } else {
       // Criar novo livro
       book = new Book(bookData);
       await book.save();
     }
-    
+
     res.json({ message: 'Livro salvo com sucesso', book });
   } catch (error) {
     console.error('Erro ao salvar livro:', error);
@@ -173,4 +176,5 @@ app.get('/', (req, res) => {
 // Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+
 });
