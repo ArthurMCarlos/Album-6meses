@@ -1,0 +1,482 @@
+ * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #19171b;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        /* Estilo da Capa */
+        .cover-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .book-cover {
+            width: 500px;
+            height: 750px;
+            background: linear-gradient(145deg, #8B4513, #A0522D);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            border: 3px solid #654321;
+        }
+
+        .book-cover:hover {
+            transform: scale(1.02);
+        }
+
+        .cover-title {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 2.8em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 90%;
+            cursor: text;
+        }
+
+        .cover-photo {
+            position: absolute;
+            top: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 250px;
+            border: 5px solid #FFD700;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .cover-photo img, .cover-photo video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cover-text {
+            position: absolute;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 1.3em;
+            text-align: center;
+            width: 90%;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            cursor: text;
+        }
+
+        .cover-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 90%;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-edit {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-read {
+            background: #FFD700;
+            color: #8B4513;
+        }
+
+        .btn-cover-edit {
+            background: #9C27B0;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Estilo do Livro */
+        .book-container {
+            display: none;
+            perspective: 2000px;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        .book {
+            width: 1000px;
+            height: 750px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #fefefe;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transform-origin: left center;
+            transition: transform 0.8s ease-in-out;
+            backface-visibility: hidden;
+            overflow: hidden;
+        }
+
+        .page-content {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: relative;
+        }
+
+        .page-left, .page-right {
+            padding: 50px;
+            position: relative;
+            border-right: 1px solid #eee;
+        }
+
+        .page-right {
+            border-right: none;
+            border-left: 1px solid #eee;
+        }
+
+        .page.turned {
+            transform: rotateY(-180deg);
+        }
+
+        /* Controles do Livro */
+        .book-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .page-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+            align-items: center;
+        }
+
+        /* Editor */
+        .editor {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+        }
+
+        .editor-container {
+            width: 95%;
+            height: 95%;
+            margin: 2.5% auto;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-header {
+            padding: 20px;
+            background: #333;
+            color: white;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-toolbar {
+            padding: 15px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .editor-page {
+            width: 100%;
+            max-width: 1000px;
+            height: 750px;
+            background: white;
+            border: 2px dashed #ddd;
+            margin: 0 auto 30px;
+            position: relative;
+            border-radius: 15px;
+        }
+
+        .draggable-element {
+            position: absolute;
+            cursor: move;
+            border: 2px dashed transparent;
+            min-width: 100px;
+            min-height: 50px;
+        }
+
+        .draggable-element:hover {
+            border-color: #4CAF50;
+        }
+
+        .draggable-element.selected {
+            border-color: #2196F3;
+            outline: 2px solid #2196F3;
+        }
+
+        .text-element {
+            padding: 15px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 8px;
+            font-family: Georgia, serif;
+        }
+
+        .image-element, .video-element {
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-element img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-element video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Handles de redimensionamento */
+        .resize-handle {
+            position: absolute;
+            background: #2196F3;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            cursor: pointer;
+        }
+
+        .resize-handle.se {
+            bottom: -6px;
+            right: -6px;
+            cursor: se-resize;
+        }
+
+        .resize-handle.sw {
+            bottom: -6px;
+            left: -6px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.ne {
+            top: -6px;
+            right: -6px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.nw {
+            top: -6px;
+            left: -6px;
+            cursor: nw-resize;
+        }
+
+        /* Editor da Capa */
+        .cover-editor {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+        }
+
+        .cover-editor-container {
+            width: 90%;
+            height: 90%;
+            margin: 5% auto;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cover-editor-header {
+            padding: 20px;
+            background: #9C27B0;
+            color: white;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cover-editor-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            gap: 30px;
+            overflow-y: auto;
+        }
+
+        .cover-preview {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cover-controls {
+            width: 300px;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .control-group input, .control-group textarea, .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .control-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Utilitários */
+        .hidden {
+            display: none !important;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* Responsivo */
+        @media (max-width: 1200px) {
+            .book {
+                width: 800px;
+                height: 600px;
+            }
+            
+            .editor-page {
+                max-width: 800px;
+                height: 600px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .book-cover {
+                width: 350px;
+                height: 525px;
+            }
+            
+            .cover-title {
+                font-size: 2.2em;
+            }
+            
+            .book {
+                width: 100%;
+                max-width: 600px;
+                height: 450px;
+            }
+            
+            .page-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-left, .page-right {
+                padding: 20px;
+            }
+            
+            .editor-page {
+                max-width: 100%;
+                height: 450px;
+            }
+        }
