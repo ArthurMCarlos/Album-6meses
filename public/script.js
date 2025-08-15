@@ -673,7 +673,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', stopDrag);
-}
 
 function drag(e) {
     if (!isDragging || !selectedElement) return;
